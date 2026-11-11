@@ -1,0 +1,27 @@
+{
+  "name": "streamer",
+  "version": "0.0.1",
+  "module": "src/server/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "bun build.ts",
+    "publish": "bun publish.ts",
+    "setup": "bun scripts/setup.ts",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "test": "bun test src"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.14",
+    "@types/sdp-transform": "^3.0.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-organize-imports": "^4.3.0"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "sdp-transform": "^3.0.0"
+  }
+}
