@@ -1,5 +1,5 @@
 import type { UnloadPluginContext } from '@sharkord/plugin-sdk';
-import { registerGetStreamStatusAction } from './actions/get-stream-status';
+import { registerGetStreamStateAction } from './actions/get-stream-state';
 import { registerGetStreamTokenAction } from './actions/get-stream-token';
 import { registerResetStreamTokenAction } from './actions/reset-stream-token';
 import { registerStreamEvents } from './helpers/register-stream-events';
@@ -17,7 +17,7 @@ const onLoad = async (ctx: TContext) => {
 
   registerGetStreamTokenAction(ctx);
   registerResetStreamTokenAction(ctx);
-  registerGetStreamStatusAction(ctx);
+  registerGetStreamStateAction(ctx);
 
   registerStreamEvents(ctx);
 

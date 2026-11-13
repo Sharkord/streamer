@@ -2,12 +2,13 @@ import { useCanUseAction } from '@sharkord/plugin-sdk/client';
 import { Group, SettingsSection } from '@sharkord/ui';
 import { memo } from 'react';
 import type { TPlugin } from '../../../types';
-import { useStreamStatus } from '../../hooks/use-stream-status';
+import { useStreamState } from '../../hooks/use-stream-state';
 import { StreamStatus } from '../stream-status';
 import { AppSettings } from './app-settings';
 import { CopyField } from './copy-field';
 import { getWhipUrl } from './helpers';
 import { useStreamToken } from './hooks/use-stream-token';
+import { StreamLog } from './stream-log';
 import { TitleField } from './title-field';
 import { TokenField } from './token-field';
 
@@ -22,7 +23,7 @@ const NoPermission = memo(() => (
 ));
 
 const StreamSetup = memo(() => {
-  const { status } = useStreamStatus();
+  const { status, log } = useStreamState();
   const { token, error, reset } = useStreamToken();
 
   return (
@@ -36,8 +37,9 @@ const StreamSetup = memo(() => {
         </Group>
         <TokenField token={token} error={error} onReset={reset} />
         <TitleField />
-        <AppSettings />
         <StreamStatus status={status} />
+        <AppSettings />
+        <StreamLog log={log} />
       </div>
     </SettingsSection>
   );

@@ -23,8 +23,8 @@ voice channel they're in. Viewers see it like a screen share.
 The video is forwarded as is, never re-encoded, so it has to be something
 browsers can play.
 
-If a stream fails, Sharkord shows the reason in a dialog. Streaming apps only
-show a generic connection error.
+Streaming apps only show a generic connection error. The **Stream log** in the
+same settings section says why a stream started, ended or failed.
 
 ## Admin settings
 

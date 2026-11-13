@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import type { TStreamStatus } from '../../types';
+import type { TStreamState, TStreamStatus } from '../../types';
 import { buildAnswer } from '../sdp/build-answer';
 import type { TOffer } from '../sdp/types';
 import type {
@@ -13,7 +13,7 @@ import { HttpError } from '../utils/http';
 import { getStreamTitle } from './get-stream-title';
 import { pipeProducer } from './pipe-producer';
 import { blockStreams } from './stream-blocks';
-import { notifyStreamError } from './stream-errors';
+import { addStreamLogEntry, getStreamLog } from './stream-log';
 import { watchBitrate } from './watch-bitrate';
 
 // one stream per user, keyed by user id
@@ -25,6 +25,22 @@ const getStreamStatus = (userId: number): TStreamStatus => {
   if (!publication) return { state: 'idle' };
 
   return { state: 'live', channelId: publication.channelId };
+};
+
+const getStreamState = (userId: number): TStreamState => ({
+  status: getStreamStatus(userId),
+  log: getStreamLog(userId)
+});
+
+/** adds to the user's stream log and sends them their current state */
+const reportStream = (
+  ctx: TContext,
+  userId: number,
+  message: string,
+  isError = false
+) => {
+  addStreamLogEntry(userId, message, isError);
+  ctx.push.toUser(userId, getStreamState(userId));
 };
 
 const getStreamSession = (userId: number) => sessions.get(userId);
@@ -54,12 +70,12 @@ const closeSession = (session: TStreamSession) => {
 /**
  * Takes the user's stream down. With a `sessionId` it only stops that session,
  * since a reconnect may already have replaced the one a late close is about.
- * With an `error` the streamer is told why instead of just seeing it end.
+ * The log says why: `error` for a failure, `reason` for anything else.
  */
 const stopStream = (
   ctx: TContext,
   userId: number,
-  options: { sessionId?: string; error?: string } = {}
+  options: { sessionId?: string; error?: string; reason?: string } = {}
 ) => {
   const session = sessions.get(userId);
 
@@ -68,11 +84,12 @@ const stopStream = (
 
   closeSession(session);
 
-  if (options.error) {
-    notifyStreamError(ctx, userId, options.error);
-  } else {
-    ctx.push.toUser(userId, { state: 'idle' });
-  }
+  reportStream(
+    ctx,
+    userId,
+    options.error ?? options.reason ?? 'Stream ended.',
+    !!options.error
+  );
   ctx.logger.log(`Stream of user ${userId} stopped`);
 };
 
@@ -186,7 +203,11 @@ const publishStream = async (
   session.publication = publication;
   unpublish(previous);
 
-  ctx.push.toUser(session.userId, getStreamStatus(session.userId));
+  reportStream(
+    ctx,
+    session.userId,
+    previous ? 'Stream moved to your new voice channel.' : 'Stream started.'
+  );
   ctx.logger.log(
     `User ${session.userId} is streaming into channel ${channelId}`
   );
@@ -255,8 +276,9 @@ const startStream = async (
 export {
   closeAllStreams,
   getStreamSession,
-  getStreamStatus,
+  getStreamState,
   publishStream,
+  reportStream,
   startStream,
   stopChannelStreams,
   stopStream

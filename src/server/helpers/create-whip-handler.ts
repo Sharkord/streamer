@@ -2,7 +2,7 @@ import type { TPluginHttpRouteHandler } from '@sharkord/plugin-sdk';
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { TContext } from '../types';
 import { getBearerToken, HttpError, sendText } from '../utils/http';
-import { notifyStreamError } from './stream-errors';
+import { reportStream } from './stream-sessions';
 import { getUserIdByStreamToken } from './stream-tokens';
 
 type TWhipHandler = (
@@ -13,8 +13,8 @@ type TWhipHandler = (
 
 /**
  * Wraps a whip route: authenticates the stream key and turns failures into
- * plain text responses. Streaming apps only show a generic error, so the real reason is
- * also pushed to the streamer in Sharkord.
+ * plain text responses. Streaming apps only show a generic error, so the real reason also
+ * goes to the streamer's stream log in Sharkord.
  */
 const createWhipHandler =
   (ctx: TContext, handler: TWhipHandler): TPluginHttpRouteHandler =>
@@ -46,7 +46,7 @@ const createWhipHandler =
       }
 
       if (userId) {
-        notifyStreamError(ctx, userId, message);
+        reportStream(ctx, userId, message, true);
       }
 
       req.resume();

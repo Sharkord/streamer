@@ -1,7 +1,7 @@
 import { createWhipHandler } from '../helpers/create-whip-handler';
 import { getStreamSession, stopStream } from '../helpers/stream-sessions';
 import type { TContext } from '../types';
-import { getLastPathSegment, HttpError, send } from '../utils/http';
+import { getLastPathSegment, send } from '../utils/http';
 
 /** DELETE /whip/<sessionId>. The streaming app calls it when the streamer stops streaming. */
 const registerDeleteWhipSessionRoute = (ctx: TContext) => {
@@ -11,12 +11,13 @@ const registerDeleteWhipSessionRoute = (ctx: TContext) => {
       const sessionId = getLastPathSegment(req);
       const session = getStreamSession(userId);
 
-      // another user's session id is answered the same as an unknown one
-      if (!session || session.id !== sessionId) {
-        throw new HttpError(404, 'No such stream.');
+      // a stream that already ended is a success, not an error: streaming apps
+      // send this after Sharkord ended the stream itself, and the streamer
+      // does not need a dialog about it
+      if (session?.id === sessionId) {
+        stopStream(ctx, userId, { sessionId });
       }
 
-      stopStream(ctx, userId, { sessionId });
       send(res, 200);
     })
   );

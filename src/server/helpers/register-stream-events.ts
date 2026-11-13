@@ -1,8 +1,7 @@
 import { ChannelPermission } from '@sharkord/plugin-sdk';
 import type { TContext } from '../types';
-import { NOT_IN_VOICE_MESSAGE } from './find-voice-channel';
 import { getSettings } from './settings';
-import { markStreamErrorShown } from './stream-errors';
+import { deleteStreamLog } from './stream-log';
 import {
   getStreamSession,
   publishStream,
@@ -24,12 +23,11 @@ const handleLeftVoice = (ctx: TContext, userId: number, channelId: number) => {
 
   if (!settings.get('stopOnLeave')) return;
 
-  // the streaming app reconnects and is refused for not being in voice, which
-  // the streamer does not need to be told right after leaving
-  const stop = () => {
-    markStreamErrorShown(userId, NOT_IN_VOICE_MESSAGE);
-    stopStream(ctx, userId, { sessionId: session.id });
-  };
+  const stop = () =>
+    stopStream(ctx, userId, {
+      sessionId: session.id,
+      reason: 'Stream ended because you left the voice channel.'
+    });
 
   if (!settings.get('followChannelSwitch')) {
     stop();
@@ -104,6 +102,7 @@ const registerStreamEvents = (ctx: TContext) => {
 
   ctx.events.on('user:deleted', async ({ userId }) => {
     stopStream(ctx, userId);
+    deleteStreamLog(userId);
     await deleteStreamToken(ctx, userId);
   });
 };
